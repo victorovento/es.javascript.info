@@ -1,68 +1,69 @@
-# ArrayBuffer, binary arrays
+# ArrayBuffer, arrays binarios
 
-In web-development we meet binary data mostly while dealing with files (create, upload, download). Another typical use case is image processing.
+En desarrollo web nos encontramos con datos binarios generalmente cuando tratamos con archivos (crear, subir, descargar). Otro uso típico es el tratamiento digital de imágenes.
 
-That's all possible in JavaScript, and binary operations are high-performant.
+Todo esto es posible en JavaScript, y las operaciones binarias ofrecen un muy buen rendimiento.
 
-Although, there's a bit of confusion, because there are many classes. To name a few:
+De igual forma, hay un poco de confusión al respecto, ya que existen muchas clases, por ejemplo:
 - `ArrayBuffer`, `Uint8Array`, `DataView`, `Blob`, `File`, etc.
 
-Binary data in JavaScript is implemented in a non-standard way, compared to other languages. But when we sort things out, everything becomes fairly simple.
+Los datos binarios en JavaScript estan implementados en una forma no estandard, comparado con otros lenguajes de programación. Pero una vez que entendemos las cosas, todo se torna más fácil.
+**El objeto binario básico es `ArrayBuffer` -- una referencia a un área de memoria de tamaño fijo.**
 
-**The basic binary object is `ArrayBuffer` -- a reference to a fixed-length contiguous memory area.**
-
-We create it like this:
+Lo creamos de la siguiente manera:
 ```js run
-let buffer = new ArrayBuffer(16); // create a buffer of length 16
+let buffer = new ArrayBuffer(16); // crea un buffer de tamaño 16
 alert(buffer.byteLength); // 16
 ```
 
-This allocates a contiguous memory area of 16 bytes and pre-fills it with zeroes.
+Esto asigna un area de memoria contigua de 16 bits y la rellena con ceros.
 
-```warn header="`ArrayBuffer` is not an array of something"
-Let's eliminate a possible source of confusion. `ArrayBuffer` has nothing in common with `Array`:
-- It has a fixed length, we can't increase or decrease it.
-- It takes exactly that much space in the memory.
-- To access individual bytes, another "view" object is needed, not `buffer[index]`.
+```warn header="`ArrayBuffer` no es un arrego de algo"
+Para eliminar un poco de confusión que pueda generarse `ArrayBuffer` no tiene nada en común con `Array`:
+- Tiene un tamaño fijo, no podemos aumentarlo ni disminuirlo.
+- Toma exactamente ese mismo espacio en la memoria. 
+- Para acceder a bytes individuales, se necesita otro objeto "view", no `buffer[index]`.
 ```
 
-`ArrayBuffer` is a memory area. What's stored in it? It has no clue. Just a raw sequence of bytes.
+`ArrayBuffer` es un área de memoria. ¿Qué se almacena en él? Solo una secuencia "cruda" de bytes
 
-**To manipulate an `ArrayBuffer`, we need to use a "view" object.**
+**Para manipular un `ArrayBuffer`, necesitamos usar un objeto "view".**
 
-A view object does not store anything on it's own. It's the "eyeglasses" that give an interpretation of the bytes stored in the `ArrayBuffer`.
+Un objeto view no allmacena nada por si mismo. Son los "anteojos" los que dan una interpretación de los bytes almacenados en el `ArrayBuffer`.
 
-For instance:
+Por ejemplo:
 
-- **`Uint8Array`** -- treats each byte in `ArrayBuffer` as a separate number, with possible values from 0 to 255 (a byte is 8-bit, so it can hold only that much). Such value is called a "8-bit unsigned integer".
-- **`Uint16Array`** -- treats every 2 bytes as an integer, with possible values from 0 to 65535. That's called a "16-bit unsigned integer".
-- **`Uint32Array`** -- treats every 4 bytes as an integer, with possible values from 0 to 4294967295. That's called a "32-bit unsigned integer".
-- **`Float64Array`** -- treats every 8 bytes as a floating point number with possible values from <code>5.0x10<sup>-324</sup></code> to <code>1.8x10<sup>308</sup></code>.
+- **`Uint8Array`** -- trata cada byte en `ArrayBuffer` como un entero, con un valor entre 0 y 255 (es un entero de 8bits, no puede almacenar más que eso). Dicho valor es llamado "Entero de 8 bits sin signo".
+- **`Uint16Array`** -- trata cada 2 bytes en `ArrayBuffer` como un número, con un valor entre 0 y 65535 . Dicho valor es llamado "Entero de 16 bits sin signo".
+- **`Uint32Array`** -- trata cada 5 bytes en `ArrayBuffer` como un entero, con un valor entre 0 y 4294967295 . Dicho valor es llamado "Entero de 32 bits sin signo".
+- **`Float64Array`** -- trata cada 8 bytes en `ArrayBuffer` como un número float, con un valor entre <code>5.0x10<sup>-324</sup></code> to <code>1.8x10<sup>308</sup></code>.
 
-So, the binary data in an `ArrayBuffer` of 16 bytes can be interpreted as 16 "tiny numbers", or 8 bigger numbers (2 bytes each), or 4 even bigger (4 bytes each), or 2 floating-point values with high precision (8 bytes each).
+Por lo tanto, los datos binarios en un `ArrayBuffer` de 16 bytes se pueden interpretar como 16" números diminutos ", o 8 números más grandes (2 bytes cada uno), o 4 incluso más grandes (4 bytes cada uno), o 2 valores de punto flotante con alta precisión (8 bytes cada uno).
+
+
 
 ![](arraybuffer-views.svg)
 
-`ArrayBuffer` is the core object, the root of everything, the raw binary data.
+`ArrayBuffer` es el objeto central, la raíz de todo, los datos binarios sin procesar.
 
-But if we're going to write into it, or iterate over it, basically for almost any operation – we must use a view, e.g:
+Pero si vamos a escribir en él, o iterar sobre él, básicamente para casi cualquier operación, debemos usar un objeto view, por ejemplo:
 
 ```js run
-let buffer = new ArrayBuffer(16); // create a buffer of length 16
+let buffer = new ArrayBuffer(16); // crea un búfer de tamaño 16
 
 *!*
-let view = new Uint32Array(buffer); // treat buffer as a sequence of 32-bit integers
+let view = new Uint32Array(buffer); // trata el búfer como una secuencia de 32 enteros
 
-alert(Uint32Array.BYTES_PER_ELEMENT); // 4 bytes per integer
+alert(Uint32Array.BYTES_PER_ELEMENT); // 4 bytes por entero
 */!*
 
-alert(view.length); // 4, it stores that many integers
-alert(view.byteLength); // 16, the size in bytes
+alert(view.length); // 4, almacena a todos los enteros
+alert(view.byteLength); // 16, tamaño en bytes
 
-// let's write a value
+// escribamos un valor
 view[0] = 123456;
 
-// iterate over values
+// iteraremos en los valores
 for(let num of view) {
   alert(num); // 123456, then 0, 0, 0 (4 values total)
 }
@@ -71,18 +72,17 @@ for(let num of view) {
 
 ## TypedArray
 
-The common term for all these views (`Uint8Array`, `Uint32Array`, etc) is [TypedArray](https://tc39.github.io/ecma262/#sec-typedarray-objects). They share the same set of methods and properities.
+El término común de todas estas views (`Uint8Array`, `Uint32Array`, etc) es [TypedArray](https://tc39.github.io/ecma262/#sec-typedarray-objects). Ellas comparten el mismo set de propiedades y métodos
 
-Please note, there's no constructor called `TypedArray`, it's just a common "umbrella" term to represent one of views over `ArrayBuffer`: `Int8Array`, `Uint8Array` and so on, the full list will soon follow.
+Nótese que no hay un constructor llamado `TypedArray`, solo es un termino "umbrella" común para representar una de estas views en `ArrayBuffer`: `Int8Array`, `Uint8Array` y así sucesivamente, pronto aparecerá la lista completa. 
 
-When you see something like `new TypedArray`, it means any of `new Int8Array`, `new Uint8Array`, etc.
+Cuando vea algo como `new TypedArray`, significa cualquiera de` new Int8Array`, `new Uint8Array`, etc.
 
-Typed arrays behave like regular arrays: have indexes and are iterable.
+Los arreglos escritas se comportan como arreglos regulares: tienen índices y son iterables.
 
-A typed array constructor (be it `Int8Array` or `Float64Array`, doesn't matter) behaves differently depending on argument types.
+Un constructor de arreglo con tipo (ya sea `Int8Array` o` Float64Array`, no importa) se comporta de manera diferente dependiendo de los tipos de argumentos.
 
-There are 5 variants of arguments:
-
+Hay 5 variantes de argumentos:
 ```js
 new TypedArray(buffer, [byteOffset], [length]);
 new TypedArray(object);
@@ -91,13 +91,13 @@ new TypedArray(length);
 new TypedArray();
 ```
 
-1. If an `ArrayBuffer` argument is supplied, the view is created over it. We used that syntax already.
+1. Si se proporciona un argumento `ArrayBuffer`, la instancia se crea sobre él. Ya usamos esa sintaxis.
 
-    Optionally we can provide `byteOffset` to start from (0 by default) and the `length` (till the end of the buffer by default), then the view will cover only a part of the `buffer`.
+     Opcionalmente, podemos proporcionar `byteOffset` para comenzar desde (0 por defecto) y la` longitud` (hasta el final del búfer por defecto), entonces la instancia cubrirá solo una parte del `búfer`.
 
-2. If an `Array`, or any array-like object is given, it creates a typed array of the same length and copies the content.
+2. Si se proporciona un "Array", o cualquier objeto similar a un arreglo, crea un arreglo con tipo de la misma longitud y copia el contenido.
 
-    We can use it to pre-fill the array with the data:
+     Podemos usarlo para rellenar previamente el arreglo con los datos: 
     ```js run
     *!*
     let arr = new Uint8Array([0, 1, 2, 3]);
@@ -105,32 +105,34 @@ new TypedArray();
     alert( arr.length ); // 4, created binary array of the same length
     alert( arr[1] ); // 1, filled with 4 bytes (unsigned 8-bit integers) with given values
     ```
-3. If another `TypedArray` is supplied, it does the same: creates a typed array of the same length and copies values. Values are converted to the new type in the process, if needed.
+    
+3. Si se proporciona otro `TypedArray`, hace lo mismo: crea un arreglo con tipo de la misma longitud y copia los valores. Los valores se convierten al nuevo tipo en el proceso, si es necesario. 
     ```js run
     let arr16 = new Uint16Array([1, 1000]);
     *!*
     let arr8 = new Uint8Array(arr16);
     */!*
     alert( arr8[0] ); // 1
-    alert( arr8[1] ); // 232, tried to copy 1000, but can't fit 1000 into 8 bits (explanations below)
+    alert( arr8[1] ); // 232, trata de copiar 1000, pero no puede guardar 1000 dentro de 8 bits (como se habia explicado más arriba)
     ```
 
-4. For a numeric argument `length` -- creates the typed array to contain that many elements. Its byte length will be `length` multiplied by the number of bytes in a single item `TypedArray.BYTES_PER_ELEMENT`:
+4. Para un argumento numérico `length` - crea el conjunto de tipos para contener esa cantidad de elementos. Su longitud de bytes será "longitud" multiplicada por el número de bytes en un solo elemento
+  `TypedArray.BYTES_PER_ELEMENT`:
     ```js run
     let arr = new Uint16Array(4); // create typed array for 4 integers
     alert( Uint16Array.BYTES_PER_ELEMENT ); // 2 bytes per integer
     alert( arr.byteLength ); // 8 (size in bytes)
     ```
 
-5. Without arguments, creates an zero-length typed array.
+5. Sin argumentos, crea un arreglo con tipo de longitud cero.
 
-We can create a `TypedArray` directly, without mentioning `ArrayBuffer`. But a view cannot exist without an underlying `ArrayBuffer`, so gets created automatically in all these cases except the first one (when provided).
+Podemos crear un `TypedArray` directamente, sin mencionar` ArrayBuffer`. Pero una vista no puede existir sin un `ArrayBuffer` subyacente, por lo que se crea automáticamente en todos estos casos excepto en el primero (cuando se proporciona).
 
-To access the `ArrayBuffer`, there are properties:
-- `arr.buffer` -- references the `ArrayBuffer`.
-- `arr.byteLength` -- the length of the `ArrayBuffer`.
+Para acceder al `ArrayBuffer`, hay propiedades:
+- `arr.buffer` - hace referencia al` ArrayBuffer`.
+- `arr.byteLength` - la longitud del` ArrayBuffer`.
 
-So, we can always move from one view to another:
+Entonces, siempre podemos pasar de una vista a otra:
 ```js
 let arr8 = new Uint8Array([0, 1, 2, 3]);
 
@@ -139,19 +141,18 @@ let arr16 = new Uint16Array(arr8.buffer);
 ```
 
 
-Here's the list of typed arrays:
+Aquí está la lista de matrices escritas:
 
-- `Uint8Array`, `Uint16Array`, `Uint32Array` -- for integer numbers of 8, 16 and 32 bits.
-  - `Uint8ClampedArray` -- for 8-bit integers, "clamps" them on assignment (see below).
-- `Int8Array`, `Int16Array`, `Int32Array` -- for signed integer numbers (can be negative).
-- `Float32Array`, `Float64Array` -- for signed floating-point numbers of 32 and 64 bits.
+- `Uint8Array`,` Uint16Array`, `Uint32Array` - para números enteros de 8, 16 y 32 bits.
+   - `Uint8ClampedArray` - para enteros de 8 bits, los" fija "en la asignación (ver más abajo).
+- `Int8Array`,` Int16Array`, `Int32Array` - para números enteros con signo (puede ser negativo).
+- `Float32Array`,` Float64Array` - para números de coma flotante firmados de 32 y 64 bits.
 
-```warn header="No `int8` or similar single-valued types"
-Please note, despite of the names like `Int8Array`, there's no single-value type like `int`, or `int8` in JavaScript.
+`` `warn header =" No `int8` o tipos similares de un solo valor"
+Tenga en cuenta que, a pesar de los nombres como `Int8Array`, no hay un tipo de valor único como` int` o `int8` en JavaScript.
 
-That's logical, as `Int8Array` is not an array of these individual values, but rather a view on `ArrayBuffer`.
-```
-
+Eso es lógico, ya que `Int8Array` no es u de estos valores individuales, sino más bien una vista de` ArrayBuffer`.
+''
 ### Out-of-bounds behavior
 
 What if we attempt to write an out-of-bounds value into a typed array? There will be no error. But extra bits are cut-off.
